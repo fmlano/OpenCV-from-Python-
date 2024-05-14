@@ -587,7 +587,7 @@ static bool ocl_arithm_op(InputArray _src1, InputArray _src2, OutputArray _dst,
 
 static void arithm_op(InputArray _src1, InputArray _src2, OutputArray _dst,
                       InputArray _mask, int dtype, BinaryFuncC* tab, bool muldiv=false,
-                      void* usrdata=0, int oclop=-1 )
+                      void* usrdata=0, int oclop=-1, bool skipConversion = false )
 {
     const _InputArray *psrc1 = &_src1, *psrc2 = &_src2;
     _InputArray::KindFlag kind1 = psrc1->kind(), kind2 = psrc2->kind();
@@ -715,9 +715,9 @@ static void arithm_op(InputArray _src1, InputArray _src2, OutputArray _dst,
                ocl_arithm_op(*psrc1, *psrc2, _dst, _mask, wtype,
                usrdata, oclop, haveScalar))
 
-    BinaryFunc cvtsrc1 = type1 == wtype ? 0 : getConvertFunc(type1, wtype);
-    BinaryFunc cvtsrc2 = type2 == type1 ? cvtsrc1 : type2 == wtype ? 0 : getConvertFunc(type2, wtype);
-    BinaryFunc cvtdst = dtype == wtype ? 0 : getConvertFunc(wtype, dtype);
+    BinaryFunc cvtsrc1 = type1 == wtype ? 0 : (skipConversion ? nullptr : getConvertFunc(type1, wtype));
+    BinaryFunc cvtsrc2 = type2 == type1 ? cvtsrc1 : type2 == wtype ? 0 : (skipConversion ? nullptr : getConvertFunc(type2, wtype));
+    BinaryFunc cvtdst = dtype == wtype ? 0 : (skipConversion ? nullptr : getConvertFunc(wtype, dtype));
 
     size_t esz1 = CV_ELEM_SIZE(type1), esz2 = CV_ELEM_SIZE(type2);
     size_t dsz = CV_ELEM_SIZE(dtype), wsz = CV_ELEM_SIZE(wtype);
@@ -880,7 +880,35 @@ static BinaryFuncC* getAddTab()
     return addTab;
 }
 
-static BinaryFuncC* getSubTab()
+static BinaryFuncC* getSubTab(bool extendSub);
+
+static void sub8u32fWrapper(const uchar* src1, size_t step1, const uchar* src2, size_t step2,
+                            uchar* dst, size_t step, int width, int height, void* )
+{
+    CALL_HAL(sub8u32f, cv_hal_sub8u32f, src1, step1, src2, step2, (float*)dst, step, width, height);
+
+    // fallback if HAL does not work
+    Mat src1Arr(height, width, CV_8UC1, const_cast<uchar*>(src1), step1);
+    Mat src2Arr(height, width, CV_8UC1, const_cast<uchar*>(src2), step2);
+    Mat dstArr(height, width, CV_32FC1, dst, step);
+    arithm_op(src1Arr, src2Arr, dstArr, noArray(), CV_32F, getSubTab(false),
+              /* muldiv */ false, 0, OCL_OP_SUB, /* skipConversion */ false);
+}
+
+static void sub8s32fWrapper(const uchar* src1, size_t step1, const uchar* src2, size_t step2,
+                            uchar* dst, size_t step, int width, int height, void* )
+{
+    CALL_HAL(sub8s32f, cv_hal_sub8s32f, (schar*)src1, step1, (schar*)src2, step2, (float*)dst, step, width, height);
+
+    // fallback if HAL does not work
+    Mat src1Arr(height, width, CV_8SC1, const_cast<uchar*>(src1), step1);
+    Mat src2Arr(height, width, CV_8SC1, const_cast<uchar*>(src2), step2);
+    Mat dstArr(height, width, CV_32FC1, dst, step);
+    arithm_op(src1Arr, src2Arr, dstArr, noArray(), CV_32F, getSubTab(false),
+              /* muldiv */ false, 0, OCL_OP_SUB, /* skipConversion */ false);
+}
+
+static BinaryFuncC* getSubTab(bool extendSub)
 {
     static BinaryFuncC subTab[] =
     {
@@ -891,7 +919,12 @@ static BinaryFuncC* getSubTab()
         0
     };
 
-    return subTab;
+    static BinaryFuncC extendSubTab[] =
+    {
+        (BinaryFuncC)sub8u32fWrapper, (BinaryFuncC)sub8s32fWrapper,
+    };
+
+    return extendSub ? extendSubTab : subTab;
 }
 
 static BinaryFuncC* getAbsDiffTab()
@@ -923,7 +956,14 @@ void cv::subtract( InputArray _src1, InputArray _src2, OutputArray _dst,
 {
     CV_INSTRUMENT_REGION();
 
-    arithm_op(_src1, _src2, _dst, mask, dtype, getSubTab(), false, 0, OCL_OP_SUB );
+    static bool hal8u32fAvailable = cv_hal_sub8u32f != hal_ni_sub8u32f;
+    static bool hal8s32fAvailable = cv_hal_sub8s32f != hal_ni_sub8s32f;
+
+    bool extendSub = (hal8u32fAvailable && (_src1.depth() == CV_8U) && (_src2.depth() == CV_8U) && (dtype == CV_32F)) ||
+                     (hal8s32fAvailable && (_src1.depth() == CV_8S) && (_src2.depth() == CV_8S) && (dtype == CV_32F));
+
+    arithm_op(_src1, _src2, _dst, mask, dtype, getSubTab(extendSub), false, 0, OCL_OP_SUB,
+              /* skipConversion */ extendSub);
 }
 
 void cv::absdiff( InputArray src1, InputArray src2, OutputArray dst )
