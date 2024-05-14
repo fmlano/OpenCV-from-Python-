@@ -1,13 +1,15 @@
 #include <iostream>
 
+#include "cvconfig.h"
 #include "opencv2/opencv_modules.hpp"
 
 #if defined(HAVE_OPENCV_CUDACODEC)
 
+#include <algorithm>
+#include <iostream>
+#include <numeric>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <numeric>
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/opengl.hpp>
@@ -20,24 +22,26 @@ int main(int argc, const char* argv[])
         return -1;
 
     const std::string fname(argv[1]);
+    cv::VideoCapture reader(fname);
 
     cv::namedWindow("CPU", cv::WINDOW_NORMAL);
-#if defined(HAVE_OPENGL)
-    cv::namedWindow("GPU", cv::WINDOW_OPENGL);
-    cv::cuda::setGlDevice();
+#if defined(HAVE_QT_OPENGL)
+    cv::namedWindow("GPU - QT with opengl", cv::WINDOW_OPENGL);
+    cv::Size const imageSize{(int)reader.get(cv::CAP_PROP_FRAME_WIDTH),
+        (int)reader.get(cv::CAP_PROP_FRAME_HEIGHT)};
+    cv::resizeWindow("GPU - QT with opengl", imageSize);
 #else
     cv::namedWindow("GPU", cv::WINDOW_NORMAL);
 #endif
 
     cv::TickMeter tm;
     cv::Mat frame;
-    cv::VideoCapture reader(fname);
     for (;;)
     {
         if (!reader.read(frame))
             break;
         cv::imshow("CPU", frame);
-        if (cv::waitKey(3) > 0)
+        if (cv::waitKey(1) > 0)
             break;
     }
 
@@ -47,13 +51,14 @@ int main(int argc, const char* argv[])
     {
         if (!d_reader->nextFrame(d_frame))
             break;
-#if defined(HAVE_OPENGL)
-        cv::imshow("GPU", cv::ogl::Texture2D(d_frame));
+
+#if defined(HAVE_QT_OPENGL)
+        cv::imshow("GPU - QT with opengl", d_frame);
 #else
         d_frame.download(frame);
         cv::imshow("GPU", frame);
 #endif
-        if (cv::waitKey(3) > 0)
+        if (cv::waitKey(1) > 0)
             break;
     }
 
