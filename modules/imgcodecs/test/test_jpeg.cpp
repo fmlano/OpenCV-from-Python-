@@ -106,7 +106,7 @@ TEST(Imgcodecs_Jpeg, encode_empty)
 TEST(Imgcodecs_Jpeg, encode_decode_progressive_jpeg)
 {
     cvtest::TS& ts = *cvtest::TS::ptr();
-    string input = string(ts.get_data_path()) + "../cv/shared/lena.png";
+    string input = string(ts.get_data_path()) + "../cv/shared/baboon.bmp";
     cv::Mat img = cv::imread(input);
     ASSERT_FALSE(img.empty());
 
@@ -131,7 +131,7 @@ TEST(Imgcodecs_Jpeg, encode_decode_progressive_jpeg)
 TEST(Imgcodecs_Jpeg, encode_decode_optimize_jpeg)
 {
     cvtest::TS& ts = *cvtest::TS::ptr();
-    string input = string(ts.get_data_path()) + "../cv/shared/lena.png";
+    string input = string(ts.get_data_path()) + "../cv/shared/baboon.bmp";
     cv::Mat img = cv::imread(input);
     ASSERT_FALSE(img.empty());
 
@@ -156,7 +156,7 @@ TEST(Imgcodecs_Jpeg, encode_decode_optimize_jpeg)
 TEST(Imgcodecs_Jpeg, encode_decode_rst_jpeg)
 {
     cvtest::TS& ts = *cvtest::TS::ptr();
-    string input = string(ts.get_data_path()) + "../cv/shared/lena.png";
+    string input = string(ts.get_data_path()) + "../cv/shared/baboon.bmp";
     cv::Mat img = cv::imread(input);
     ASSERT_FALSE(img.empty());
 

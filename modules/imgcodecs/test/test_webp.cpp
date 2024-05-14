@@ -10,7 +10,7 @@ namespace opencv_test { namespace {
 TEST(Imgcodecs_WebP, encode_decode_lossless_webp)
 {
     const string root = cvtest::TS::ptr()->get_data_path();
-    string filename = root + "../cv/shared/lena.png";
+    string filename = root + "../cv/shared/baboon.bmp";
     cv::Mat img = cv::imread(filename);
     ASSERT_FALSE(img.empty());
 
@@ -59,7 +59,7 @@ TEST(Imgcodecs_WebP, encode_decode_lossless_webp)
 TEST(Imgcodecs_WebP, encode_decode_lossy_webp)
 {
     const string root = cvtest::TS::ptr()->get_data_path();
-    std::string input = root + "../cv/shared/lena.png";
+    std::string input = root + "../cv/shared/baboon.bmp";
     cv::Mat img = cv::imread(input);
     ASSERT_FALSE(img.empty());
 
@@ -83,7 +83,7 @@ TEST(Imgcodecs_WebP, encode_decode_lossy_webp)
 TEST(Imgcodecs_WebP, encode_decode_with_alpha_webp)
 {
     const string root = cvtest::TS::ptr()->get_data_path();
-    std::string input = root + "../cv/shared/lena.png";
+    std::string input = root + "../cv/shared/baboon.bmp";
     cv::Mat img = cv::imread(input);
     ASSERT_FALSE(img.empty());
 

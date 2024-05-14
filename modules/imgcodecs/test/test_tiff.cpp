@@ -1112,7 +1112,7 @@ TEST(Imgcodecs_Tiff_Modes, write_multipage)
 TEST(Imgcodecs_Tiff, imdecode_no_exception_temporary_file_removed)
 {
     const string root = cvtest::TS::ptr()->get_data_path();
-    const string filename = root + "../cv/shared/lena.png";
+    const string filename = root + "../cv/shared/baboon.bmp";
     cv::Mat img = cv::imread(filename);
     ASSERT_FALSE(img.empty());
     std::vector<uchar> buf;

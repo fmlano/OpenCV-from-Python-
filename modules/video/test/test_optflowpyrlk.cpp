@@ -220,7 +220,7 @@ TEST(Video_OpticalFlowPyrLK, accuracy) { CV_OptFlowPyrLKTest test; test.safe_run
 TEST(Video_OpticalFlowPyrLK, submat)
 {
     // see bug #2075
-    std::string path = cvtest::TS::ptr()->get_data_path() + "../cv/shared/lena.png";
+    std::string path = cvtest::TS::ptr()->get_data_path() + "../cv/shared/baboon.bmp";
 
     cv::Mat lenaImg = cv::imread(path);
     ASSERT_FALSE(lenaImg.empty());

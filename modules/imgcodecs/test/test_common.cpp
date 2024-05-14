@@ -12,7 +12,7 @@ Mat generateTestImageBGR_()
     Size sz(640, 480);
     Mat result(sz, CV_8UC3, Scalar::all(0));
 
-    const string fname = cvtest::findDataFile("../cv/shared/baboon.png");
+    const string fname = cvtest::findDataFile("../cv/shared/baboon.bmp");
     Mat image = imread(fname, IMREAD_COLOR);
     CV_Assert(!image.empty());
     CV_CheckEQ(image.size(), Size(512, 512), "");
